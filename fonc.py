@@ -178,7 +178,8 @@ def Afficherinf(file):
             moydev=notess[j]["moydev"]
             moygen=notess[j]["moygen"]
             print(j," Devoir:",dev,"Examen: ",exam,"Moyenne de Devoir: ",moydev,"Moyenne général: ",moygen)
-########################################################
+        print("----------------------------------------------------------------------------------------------")
+##############################################
 def Affichinfnum(Numero,file):
     for i in file:
         if i["Numero"]==Numero:
