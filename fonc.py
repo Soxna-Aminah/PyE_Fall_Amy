@@ -1,3 +1,9 @@
+from select import select
+import mysql.connector
+from datetime import datetime
+from csv import*
+
+from sqlalchemy import insert 
 ####Fonction pour abréger un mois#######
 def supabrevmoi(m):
     r=None
@@ -54,6 +60,12 @@ def transformdate(date):
             m=str(m)
             a=str(a)
             ndate=j+"/"+m+"/"+a
+            try:
+                ndate=datetime.strptime(ndate, "%d/%m/%Y")
+            except:
+                return None
+
+
             return ndate
         else:
             return None  
@@ -78,7 +90,7 @@ def Numvalide(num):
 ##########################Fonction classe valide
 def classe(chaine):
     l1=["3","4","5","6"]
-    l2=["A","B","C","D"]
+    l2=["A","B"]
     nclass=None
     for i in l1:
         for j in l2:
@@ -119,6 +131,15 @@ def verifnotevalid(note):
         return True
     else:
         return False
+def matiere(liste):
+    li=[]
+    for i in liste:
+        i=i.strip()
+        if i[0]=="F":
+                i="Francais"
+        li.append(i)
+    return li
+
 ########################Traitement des notes#####################
 def Note(note):
     dictnote={}
@@ -159,6 +180,7 @@ def Note(note):
         else:
             return False
         i+=1
+    listmat=matiere(listmat)
     dictnote=dict(zip(listmat,nlistnote))
     return dictnote
     ###########################################
@@ -168,8 +190,9 @@ def Afficherinf(file):
         pren=i["Prénom"]
         nom=i["Nom"]
         datenaiss=i["Date de naissance"]
+        classe=i["Classe"]
         notess=i["Note"]
-        print("Numero: ",n," Prénom: ",pren,"  Nom: ",nom," Date de Naissance",datenaiss)
+        print("Numero: ",n," Prénom: ",pren,"  Nom: ",nom," Date de Naissance: ",datenaiss," Classe: ",classe)
         print("Notes: ")
         #print(notess)
         for j in notess:
@@ -177,6 +200,7 @@ def Afficherinf(file):
             exam=notess[j]["examen"]
             moydev=notess[j]["moydev"]
             moygen=notess[j]["moygen"]
+            
             print(j," Devoir:",dev,"Examen: ",exam,"Moyenne de Devoir: ",moydev,"Moyenne général: ",moygen)
         print("----------------------------------------------------------------------------------------------")
 ##############################################
@@ -194,10 +218,164 @@ def determinematiere(file):
     matiere=[]
     for i in file:
         for j in i["Note"]:
+            j=j.strip()
+            if j[0]=="F":
+                j="Francais"
             matiere.append(j)
     matiere=set(matiere)
+    matiere=list(matiere)
     return matiere
 ##########################################################
-def Affich5premier(Notes):
-    for i in Notes:
-        moy=Notes[i]["moygen"]
+def moygenerale(file):
+    i=0
+    m=len(file)
+    listmoy=[]
+    while i<m:
+        l=0
+        s=0
+        for j in file[i]["Note"]:
+           n=str(j)
+           s+=file[i]["Note"][n]["moygen"]
+           l+=1
+        moy=s/l
+        listmoy.append(moy)
+        file[i]["Moyenne General"]=moy
+        i+=1
+    return file
+
+##########################################
+def en_fonction(row):
+    return row["Moyenne General"]
+#########################################
+def Affich5premier(file):
+    nfile=moygenerale(file)
+    nfile.sort(key=en_fonction,reverse=True)
+    for i in range(5):
+        print(nfile[i])
+#############
+def connexionbaserecup(r):
+    connectpar={
+        "host":"localhost",
+        "user":"Aminah",
+        "password":'Ami@h1998',
+        "database":"projetpythonsql"
+    }
+    with mysql.connector.connect(**connectpar) as db:
+            with db.cursor() as c:
+                c.execute(r)
+                n=c.fetchall()
+                return n
+#remplir clé etrangére éléve
+def classeleve(classe,r):
+     connectpar={
+     "host":"localhost",
+    "user":"Aminah",
+    "password":'Ami@h1998',
+    "database":"projetpythonsql"}
+     with mysql.connector.connect(**connectpar) as db:
+        with db.cursor() as c:
+            c.execute(r)
+            n=c.fetchall()
+            k=0
+            while k<len(n):
+                if n[k][1]==classe:
+                    nclass=n[k][0]
+                    return nclass
+                k+=1
+# #importer dans la base
+#fonction insertion Classe
+def inserClasse(file):
+    i=0
+    li=[]
+    while i<len(file):
+      n=file[i]["Classe"]
+      n=(n,)
+      li.append(n)
+      i+=1
+    li=set(li)
+    li=list(li)
+    return li
+#fonction insertion Eleve
+def insertEleve(file):
+    r="select *from Classe"
+    elv=[]
+    i=0
+    while i<len(file):
+        n=file[i]["Classe"]
+        num=file[i]["Numero"]
+        pren=file[i]["Prénom"]
+        nom=file[i]["Nom"]
+        daten=file[i]["Date de naissance"]
+        nc=classeleve(n,r)
+        el=(num,nom,pren,daten,nc)
+        elv.append(el)
+        i+=1
+    return elv
+def insertEtudier(file):
+    r="select *from Matiere"
+    r1= "select *from Note"
+    mat=[]
+    i=0
+    while i<len(file):
+        notes=file[i]["Note"]
+        for j in notes:
+            no=classeleve(j,r)
+            notes[j]
+        i+=1
+#fonction insertion matiere
+def insertmat(file):
+    mat=[]
+    n=determinematiere(file)
+    for i in n:
+         mat.append((i,))
+    return mat
+def verifclass(var,r):
+    l=connexionbaserecup(r)
+    i=0
+    while i<len(l):
+        if l[i][1]==var:
+            return l[i][0]
+        i+=1
+def insertnote(file):
+    r2="select id_eleve,numero from Eleve"
+    r3="select *from Matiere"
+    i=0
+    note=[]
+    while i<len(file):
+        notes=file[i]["Note"]
+        num=file[i]["Numero"]
+        id_el=verifclass(num,r2)
+        for j in notes:
+            mat=verifclass(j,r3)
+            dev=notes[j]["devoir"]
+            for k in dev:
+                note.append(("devoir",k,mat,id_el))
+            exam=float(notes[j]["examen"])
+            note.append(("examen",exam,mat,id_el))
+        i+=1
+    return note
+def imporsql(file):
+    elv=insertEleve(file)
+    li=inserClasse(file)
+    mat=insertmat(file)
+    note=insertnote(file)
+    # exam=insertnote(file)[1]
+    connectpar={
+     "host":"localhost",
+    "user":"Aminah",
+    "password":'Ami@h1998',
+    "database":"projetpythonsql"}
+    r="insert into Classe(nom_class) values(%s)"
+    r1="insert into Eleve(numero,nom,prenom,datenaiss,id_classe) values(%s,%s,%s,%s,%s)"
+    r3="insert into Matiere(nom_matiere) values(%s)"
+    r4="insert into Note(type_note,note,id_matiere,id_eleve) values(%s,%s,%s,%s)"
+    with mysql.connector.connect(**connectpar) as db:
+        with db.cursor() as c:
+            pass
+            #c.executemany(r,li)
+            #c.executemany(r1,elv)
+            #c.executemany(r3,mat)
+            #c.executemany(r4,note)
+        db.commit()   
+
+

@@ -1,4 +1,6 @@
+from doctest import FAIL_FAST
 from fonc import*
+from collections import OrderedDict
 #Suppression des valeurs manquantes
 import csv
 outfile = open("nfile",'w')
@@ -11,6 +13,7 @@ with open("file.csv",'r') as infile:
             writer.writerow(row)
 outfile.close()
 infile.close()
+#########Traitement
 from csv import DictReader
 myfilevalide=[]
 myfileinvalide=[]
@@ -40,6 +43,7 @@ for row in  csv_reader:
          myfilevalide.append(row)    
                        
 file.close()
+                    
 rep=True
 ans=True
 while rep:
@@ -49,7 +53,8 @@ while rep:
             3.Afficher les cinq premiers
             4.Modifier une information invalide ensuite le transférer dans la structure où se
 trouve les informations valides
-            5.Quitter
+            5.Importer dans la base sql
+            6.Quitter
          """)
     rep=input("Faites votre choix: ")
     if rep=="1":
@@ -74,9 +79,14 @@ trouve les informations valides
         Affichinfnum(num)
     elif rep=="3":
         print("Afficher les cinq premiers")
+        Affich5premier(myfilevalide)
     elif rep=="4":
         print("Modification d'une information invalide")
     elif rep=="5":
+        print("Importer dans la base")
+        imporsql(myfilevalide)
+    elif rep=="6":
         rep=None
     else:
         print("Choix indisponible")
+
