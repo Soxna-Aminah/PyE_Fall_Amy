@@ -137,6 +137,8 @@ def matiere(liste):
         i=i.strip()
         if i[0]=="F":
                 i="Francais"
+        elif i=="Science_Physique":
+            i="PC"
         li.append(i)
     return li
 
@@ -221,6 +223,8 @@ def determinematiere(file):
             j=j.strip()
             if j[0]=="F":
                 j="Francais"
+            elif  j=="Science_Physique":
+                j="PC"
             matiere.append(j)
     matiere=set(matiere)
     matiere=list(matiere)
@@ -311,17 +315,6 @@ def insertEleve(file):
         elv.append(el)
         i+=1
     return elv
-def insertEtudier(file):
-    r="select *from Matiere"
-    r1= "select *from Note"
-    mat=[]
-    i=0
-    while i<len(file):
-        notes=file[i]["Note"]
-        for j in notes:
-            no=classeleve(j,r)
-            notes[j]
-        i+=1
 #fonction insertion matiere
 def insertmat(file):
     mat=[]
@@ -354,11 +347,47 @@ def insertnote(file):
             note.append(("examen",exam,mat,id_el))
         i+=1
     return note
+def moyenne(file):
+    limoy=[]
+    nfile=moygenerale(file)
+    r2="select id_eleve,numero from Eleve"
+    i=0
+    while i<len(nfile):
+        num=nfile[i]["Numero"]
+        moygen=nfile[i]["Moyenne General"]
+        id_el=verifclass(num,r2)
+        n=(moygen,id_el)
+        limoy.append(n)
+        i+=1
+    return limoy
+def calculmoyenn(dev,exam):
+     moydev=sum(dev)/len(dev)
+     moyenn=(2*exam+moydev)/3
+     moyenn=round(moyenn,2)
+     return moyenn
+def calculmoyelev(moy):
+    moyenegen=sum(moy)/len(moy)
+    moyenegen=round(moyenegen,2)
+    return moyenegen
+
+def creatriiger():
+    r="""DELIMITER |
+         create trigger after_update_Note before update
+         on Note
+         for each row
+         BEGIN
+         DECLARE note FLOAT
+            BEGIN
+
+         
+         
+             """
 def imporsql(file):
     elv=insertEleve(file)
     li=inserClasse(file)
     mat=insertmat(file)
     note=insertnote(file)
+    moy=moyenne(file)
     # exam=insertnote(file)[1]
     connectpar={
      "host":"localhost",
@@ -369,13 +398,14 @@ def imporsql(file):
     r1="insert into Eleve(numero,nom,prenom,datenaiss,id_classe) values(%s,%s,%s,%s,%s)"
     r3="insert into Matiere(nom_matiere) values(%s)"
     r4="insert into Note(type_note,note,id_matiere,id_eleve) values(%s,%s,%s,%s)"
+    r5="insert into Moyenne(moyenne,id_eleve) values(%s,%s)"
     with mysql.connector.connect(**connectpar) as db:
         with db.cursor() as c:
             pass
             #c.executemany(r,li)
             #c.executemany(r1,elv)
             #c.executemany(r3,mat)
-            #c.executemany(r4,note)
-        db.commit()   
-
+            c.executemany(r4,note)
+            # c.executemany(r5,moy)
+        db.commit()
 

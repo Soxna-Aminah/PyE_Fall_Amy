@@ -42,8 +42,7 @@ for row in  csv_reader:
     else:
          myfilevalide.append(row)    
                        
-file.close()
-                    
+file.close()            
 rep=True
 ans=True
 while rep:
